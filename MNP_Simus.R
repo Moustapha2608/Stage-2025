@@ -193,7 +193,50 @@ detect_cluster <- function(scenario, intensity, simu_id)
 }
 
 
-       
+  
+for (i in 1:20) {
+  cat("Simulation", i, "...\n")
+  res <- detect_cluster("Simu1", "weak", simu_id = i)
+}
+
+############################
+
+files <- list.files("results_simulation/", full.names = TRUE)
+results <- lapply(files, readRDS)
+
+
+evals <- lapply(results, function(res) {
+  if (length(res$dept_detectes) == 0 || is.na(res$pvalue)) {
+    return(data.frame(
+      TP = 0,
+      FP = 0,
+      PPV = 0,
+      puissance = 0
+    ))
+  }
+  
+  TP <- sum(res$dept_detectes %in% res$dept_simules)
+  FP <- sum(!res$dept_detectes %in% res$dept_simules)
+  
+  
+  PPV <- TP / length(res$dept_detectes)
+  puissance <- if (TP > 0) 1 else 0
+  
+  data.frame(TP = TP, FP = FP, PPV = PPV, puissance = puissance)
+})
+eval_df <- do.call(rbind, evals)
+
+
+mean(eval_df$puissance)  # Proportion de détection correcte (puissance)
+mean(eval_df$PPV)
+# Précision moyenne
+
+# Moyenne des taux de vrais positifs (départements simulés correctement détectés), sur les cas où un cluster a été détecté
+mean(eval_df$TP / length(code_dept_clus))
+
+#Moyenne des proportions de départements détectés qui ne sont pas dans le vrai cluster
+mean(eval_df$FP / length(code_dept_out))
+     
     
  
     
